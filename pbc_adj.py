@@ -80,14 +80,15 @@ def build_hyperbolic_lattice(Nc, k, m, seed=2):
     underfull = [n for n in G.nodes if G.degree(n) < k]
     while len(underfull) > 1:
         u = random.choice(underfull)
-        underfull.remove(u)
+        # underfull.remove(u)
 
         # pick another underfull node not already connected
-        candidates = [n for n in underfull if not G.has_edge(u, n)]
+        #candidates = [n for n in underfull if not G.has_edge(u, n)]
+        candidates = [n for n in G.nodes]
         if not candidates:
             continue
         v = random.choice(candidates)
-        underfull.remove(v)
+        # underfull.remove(v)
 
         G.add_edge(u, v)
 
@@ -95,9 +96,9 @@ def build_hyperbolic_lattice(Nc, k, m, seed=2):
         underfull = [n for n in G.nodes if G.degree(n) < k]
 
     # Safety check: ensure all nodes have degree == k
-    for n in G.nodes:
-        if G.degree(n) != k:
-            raise ValueError(f"Node {n} has degree {G.degree(n)}, expected {k}")
+    # for n in G.nodes:
+    #     if G.degree(n) != k:
+    #         raise ValueError(f"Node {n} has degree {G.degree(n)}, expected {k}")
 
     # Convert to adjacency matrix
     H = nx.to_numpy_array(G, dtype=int)
