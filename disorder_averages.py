@@ -15,7 +15,7 @@ C_E = np.arange(1, N + 1)
 normalized_energies = C_E / N
 normalized_energies = normalized_energies[1:-1]
 
-Nds = 100 #Averaging over 100 disorder realizations
+Nds = 1500 #Averaging over 100 disorder realizations
 N = 29 #Number of disorder strengths
 Ws = 4 + np.arange(1, N+1) * 4
 
@@ -64,28 +64,35 @@ rs_mean = np.mean(np.array(rs_cumulative), axis = 0) #This should also be 2d, re
 
 # Now, we plot the heatmap
 
-import matplotlib.pyplot as plt
-
 # --- Prepare axis arrays ---
 E = np.linspace(0, 1, rs_mean.shape[1] + 2)[1:-1]  # normalized energies (trimmed to match N-2)
 W = Ws  # disorder strengths
 
 # --- Plot r heatmap ---
-plt.figure(figsize=(6,5))
-plt.pcolormesh(E, W, rs_mean, cmap="hot", shading="auto")
-plt.colorbar(label="⟨r⟩")
-plt.gca().invert_yaxis()   # W increases from top to bottom
-plt.xlabel("Normalized Energy (E)")
-plt.ylabel("Disorder Strength (W)")
-plt.title("Mean spacing ratio ⟨r⟩")
-plt.show()
+# plt.figure(figsize=(6,5))
+# plt.pcolormesh(E, W, rs_mean, cmap="hot", shading="auto")
+# plt.colorbar(label="⟨r⟩")
+# plt.gca().invert_yaxis()   # W increases from top to bottom
+# plt.xlabel("Normalized Energy (E)")
+# plt.ylabel("Disorder Strength (W)")
+# plt.title("Mean spacing ratio ⟨r⟩")
+# plt.show()
 
-# --- Plot IPR heatmap ---
-plt.figure(figsize=(6,5))
-plt.pcolormesh(E, W, IPRs_mean, cmap="hot", shading="auto")
-plt.colorbar(label="⟨IPR⟩")
-plt.gca().invert_yaxis()
-plt.xlabel("Normalized Energy (E)")
-plt.ylabel("Disorder Strength (W)")
-plt.title("Mean Inverse Participation Ratio (IPR)")
-plt.show()
+# # --- Plot IPR heatmap ---
+# plt.figure(figsize=(6,5))
+# plt.pcolormesh(E, W, IPRs_mean, cmap="hot", shading="auto")
+# plt.colorbar(label="⟨IPR⟩")
+# plt.gca().invert_yaxis()
+# plt.xlabel("Normalized Energy (E)")
+# plt.ylabel("Disorder Strength (W)")
+# plt.title("Mean Inverse Participation Ratio (IPR)")
+# plt.show()
+# --- Save results instead of plotting ---
+
+# Save as .npy for easy reload in Python
+np.save("rs_mean.npy", rs_mean)           # shape (len(Ws), N-2)
+np.save("IPRs_mean.npy", IPRs_mean)       # shape (len(Ws), N-2)
+np.save("Ws.npy", Ws)                     # disorder strengths
+np.save("normalized_energies.npy", E)     # normalized energies
+
+print("Saved results: rs_mean.npy, IPRs_mean.npy, Ws.npy, normalized_energies.npy")
