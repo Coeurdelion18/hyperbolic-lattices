@@ -35,7 +35,11 @@ def hyperbolic_adjacency_sparse(p, q, n):
 
 
 def timeEvolve_sparse(psi0, H, t):
-    return expm_multiply((-1j * H * t / hbar), psi0)
+    #Trace: timeEvolve_sparse -> simulate_random_walk_sparse -> std_dev_with_t_sparse -> p_q_slope
+    psi_t = expm_multiply((-1j * H * t / hbar), psi0)
+    psi_t /= np.sqrt(np.vdot(psi_t, psi_t))
+    E_t = np.vdot(psi_t, H @ psi_t)
+    return psi_t, np.real(E_t)
 
 
 def simulate_random_walk_sparse(T, t, H):
@@ -45,18 +49,19 @@ def simulate_random_walk_sparse(T, t, H):
     site = 0  # start at origin
     psi0[site] = 1.0
 
-    psi_t = timeEvolve_sparse(psi0, H, t)
+    psi_t, E_t = timeEvolve_sparse(psi0, H, t)
 
     prob = np.abs(psi_t)**2
     prob /= prob.sum()
 
-    return prob
+    return prob, E_t
 
 
 # --- Standard deviation vs time ---
 def std_dev_with_t_sparse(p, q, n, t_max):
     times = np.arange(0, t_max, 0.05)
     stds = []
+    energies = []
 
     # Build geometry + Hamiltonian
     A, T = hyperbolic_adjacency_sparse(p, q, n)
@@ -73,10 +78,11 @@ def std_dev_with_t_sparse(p, q, n, t_max):
         r2[i] = d**2
 
     for t in times:
-        prob = simulate_random_walk_sparse(T, t, H)
+        prob, E_t = simulate_random_walk_sparse(T, t, H)
 
         sigma = np.sqrt(np.sum(prob * r2))
         stds.append(sigma)
+        energies.append(E_t)
 
     # --- plot spread vs time and save ---
     plt.figure()
@@ -87,7 +93,15 @@ def std_dev_with_t_sparse(p, q, n, t_max):
     plt.savefig(os.path.join(PLOT_DIR, f"spread_vs_t_p{p}_q{q}_n{n}.png"))
     plt.close()
 
-    return times, stds
+    plt.figure()
+    plt.plot(times, energies, marker='o')
+    plt.xlabel("t")
+    plt.ylabel("energy profile")
+    plt.title(f"Energy vs t (p={p}, q={q}, n={n})")
+    plt.savefig(os.path.join(PLOT_DIR, f"energy_vs_t_p{p}_q{q}_n{n}.png"))
+    plt.close()
+
+    return times, stds, energies
 
 
 from scipy.stats import linregress
@@ -193,6 +207,7 @@ def p_q_slope(p_min=3, p_max=8, q_min=3, q_max=8, t_max=7):
     # Sized to allow direct indexing: slopes[p, q]
     slopes = np.full((p_max+1, q_max+1), np.nan)
     lin_times = np.full((p_max+1, q_max+1), np.nan)
+    energies = np.full((p_max+1, q_max+1, len(np.arange(0, t_max, 0.05))), np.nan)
 
     for p in range(p_min, p_max+1):
         for q in range(q_min, q_max+1):
@@ -201,7 +216,8 @@ def p_q_slope(p_min=3, p_max=8, q_min=3, q_max=8, t_max=7):
             if (p - 2) * (q - 2) > 4:
                 try:
                     # n (layer count) fixed at 4 for quick calculations
-                    times, stds = std_dev_with_t_sparse(p, q, 4, t_max)
+                    times, stds, e_t = std_dev_with_t_sparse(p, q, 4, t_max)
+                    logger.info(f"Computed energy profile for p = {p}, q={q}: {e_t}")
                     
                     # Ensure this unpacking matches your actual linear_region_study function
                     _, lin_time, m, _ = linear_region_study(times, stds)
@@ -209,13 +225,13 @@ def p_q_slope(p_min=3, p_max=8, q_min=3, q_max=8, t_max=7):
                     # Store the slope
                     slopes[p, q] = m
                     lin_times[p, q] = lin_time
+                    energies[p, q] = np.array(e_t)
                     logger.info(f"Computed slope for p={p}, q={q}: {m}, linear time: {lin_time}")
                     
                 except Exception as e:
                     logger.error(f"Simulation failed for p={p}, q={q} due to: {e}")
                     pass # Leaves the value as NaN
-
-    return slopes, lin_times
+    return slopes, lin_times, energies
 
 def p_q_nonlinear(p_min=7, p_max=8, q_min=7, q_max=8, t_max=7):
     alphas = np.full((p_max+1, q_max+1), np.nan)
@@ -242,9 +258,4 @@ def p_q_nonlinear(p_min=7, p_max=8, q_min=7, q_max=8, t_max=7):
     return alphas, height_diffs
 
 if __name__ == "__main__":
-    alphas, diffs = p_q_nonlinear()
-    slopes, lin_times = p_q_slope()
-    np.save("alpha_matrix.npy", alphas)
-    np.save("heights_matrix.npy", diffs)
-    np.save("slopes.npy", slopes)
-    np.save("lin_times.npy", lin_times)
+    slopes, lin_times, energies = p_q_slope(3, 3, 8, 8, 7)

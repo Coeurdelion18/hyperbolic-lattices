@@ -1,3 +1,6 @@
 __pycache__/
 .vscode/
 Results/
+plots_0.05/
+plots_disordered/
+*.log

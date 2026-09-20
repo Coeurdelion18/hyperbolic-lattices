@@ -1,5 +1,5 @@
 import pickle
-from hyperbolic.randomwalk import std_dev_with_t_sparse, linear_region_study
+from randomwalk import std_dev_with_t_sparse, linear_region_study
 import logging
 
 # DEFINE PARAMETERS

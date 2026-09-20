@@ -8,7 +8,7 @@ from hypertiling import HyperbolicTiling
 from hypertiling.neighbors import find_radius_optimized_single
 import hypertiling as ht
 
-from hyperbolic.randomwalk import simulate_random_walk_sparse
+from randomwalk import simulate_random_walk_sparse
 
 # DEFINE PARAMETERS
 
